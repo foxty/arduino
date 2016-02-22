@@ -7,7 +7,6 @@
 
     - LM35 信号接A0
     - DHT11 GND接地,VCC接入5v电源,信号接入到PIN 8
-    - DHT11 GND接地,VCC接入5v电源,信号接入到PIN 9
     - Flame Sensor 正极(长针脚)接电源, 负极(短针脚)接10k电阻, 10k电阻另一端接地,Flame Sensor和10k电阻之间信号接入A1
     - 红色LED接入3,蓝色LED接4
 */  
@@ -16,7 +15,6 @@ const int RATE = 2000;
 
 LiquidCrystal_I2C lcd(0x3F, 16, 2);
 HumitureDHT11 dht11A(8);
-HumitureDHT11 dht11B(9);
 FlameSensor fs(A1, 200);
 
 void setup() {
@@ -35,7 +33,6 @@ void loop() {
   int fire = fs.readSensor();
   //int temp = lm35.readSensor();
   Humiture ha = dht11A.readSensor();
-  Humiture hb = dht11B.readSensor();
 
   lcd.print("Ha");
   lcd.print((int)ha.humidity);
@@ -45,10 +42,6 @@ void loop() {
   lcd.print(fire);
 
   lcd.setCursor(0, 1);
-  lcd.print("Hb");
-  lcd.print((int)hb.humidity);
-  lcd.print(",");
-  lcd.print((int)hb.temperature);
 
   delay(RATE);
 }
