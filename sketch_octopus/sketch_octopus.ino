@@ -12,10 +12,12 @@
 */  
 
 const int RATE = 2000;
-
-LiquidCrystal_I2C lcd(0x3F, 16, 2);
+//blue is 0x27, green is 0x3F
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 HumitureDHT11 dht11A(8);
-FlameSensor fs(A1, 200);
+FlameSensor fs0(FLAME_SENSOR_ANALOG, A0, 200);
+FlameSensor fs1(FLAME_SENSOR_ANALOG, A1, 200);
+FlameSensor fs2(FLAME_SENSOR_ANALOG, A2, 200);
 
 void setup() {
   // Init LCD
@@ -30,18 +32,22 @@ void setup() {
 void loop() {
   lcd.clear();
 
-  int fire = fs.readSensor();
-  //int temp = lm35.readSensor();
+  int fire0 = fs0.readSensor();
+  int fire1 = fs1.readSensor();
+  int fire2 = fs2.readSensor();
   Humiture ha = dht11A.readSensor();
 
-  lcd.print("Ha");
+  lcd.print("H");
   lcd.print((int)ha.humidity);
-  lcd.print(",");
+  lcd.print(",T");
   lcd.print((int)ha.temperature);
-  lcd.print(" F");
-  lcd.print(fire);
 
   lcd.setCursor(0, 1);
+  lcd.print(fire0);
+  lcd.print(",");
+  lcd.print(fire1);
+  lcd.print(",");
+  lcd.print(fire2);
 
   delay(RATE);
 }

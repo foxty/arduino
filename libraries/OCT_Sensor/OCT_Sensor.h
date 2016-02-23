@@ -43,13 +43,18 @@ public:
 };
 
 // Flame Sensor
+const int FLAME_SENSOR_ANALOG = 0;
+const int FLAME_SENSOR_DIGITAL = 1;
 class FlameSensor: public SensorBase<int> {
   public:
-    FlameSensor(byte pin, int t);
+    // type = 0 is single sensor
+    // type = 1 is module sensor
+    FlameSensor(byte type, byte pin, int t);
     int readSensor();
     boolean isOverThreshold();
 	
   private:
+    byte _type;
     int _threshold;
 };
 

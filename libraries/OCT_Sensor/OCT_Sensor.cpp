@@ -38,10 +38,11 @@ Humiture HumitureDHT11::readSensor() {
 }
 
 // FlameSensor
-FlameSensor::FlameSensor(byte pin, int t):SensorBase(pin), _threshold(t) {}
+FlameSensor::FlameSensor(byte type, byte pin, int t):SensorBase(pin), _type(type), _threshold(t) {}
 
 int FlameSensor::readSensor() {
-    return analogRead(_inputPin);
+    int val = (_type == 0 ? analogRead(_inputPin) : digitalRead(_inputPin));
+    return val;
 }
 
 boolean FlameSensor::isOverThreshold() {
