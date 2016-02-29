@@ -20,16 +20,15 @@ const int RATE = 2000;
 //0x27(GREEN), 0x3F(BLUE) - but sometimes it changes...
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 HumitureDHT11 dht11A(6);
-FlameSensor fs0(FLAME_SENSOR_ANALOG, A0, 200);
-FlameSensor fs1(FLAME_SENSOR_ANALOG, A1, 200);
-FlameSensor fs2(FLAME_SENSOR_ANALOG, A2, 200);
+FlameSensor fs0(FLAME_SENSOR_ANALOG, A0, 100);
+FlameSensor fs1(FLAME_SENSOR_ANALOG, A1, 100);
+FlameSensor fs2(FLAME_SENSOR_ANALOG, A2, 100); 
 //RF24 radio(7, 8);
 
 void setup() {
   // Init LCD
   lcd.init(); // initialize the lcd
   lcd.noBacklight(); //Close the backlight
-  //lcd.autoscroll();
   lcd.print("    Octopus"); // Print a message to the LCD.
 
   Serial.begin(9600);
@@ -59,8 +58,5 @@ void loop() {
   lcd.print(fire1);
   lcd.print(",");
   lcd.print(fire2);
-  Serial.print("loop");
-  Serial.print(ha.humidity);
-
   delay(RATE);
 }

@@ -38,14 +38,35 @@ Humiture HumitureDHT11::readSensor() {
 }
 
 // FlameSensor
-FlameSensor::FlameSensor(byte type, byte pin, int t):SensorBase(pin), _type(type), _threshold(t) {}
+FlameSensor::FlameSensor(byte type, byte pin, int t):SensorBase(pin), _type(type), _gapThreshold(t) {
+    _lastSampleTime = millis();
+    _samplePos = 0;
+}
 
 int FlameSensor::readSensor() {
-    int val = (_type == 0 ? analogRead(_inputPin) : digitalRead(_inputPin));
+    int val = (_type == FLAME_SENSOR_ANALOG ? analogRead(_inputPin) : digitalRead(_inputPin));
+    unsigned long curTime = millis();
+    // record current sapmple
+    if(curTime - _lastSampleTime >= SAMPLE_TIME_GAP || curTime < _lastSampleTime) {
+        if(_samplePos >= SAMPLE_SIZE) _samplePos = 0;
+        _samples[_samplePos++] = val;
+        _lastSampleTime = curTime;
+        Serial.print("Add val to samples : ");
+        Serial.print(_samplePos - 1);
+        Serial.print(",");
+        Serial.println(val);
+    }
     return val;
 }
 
-boolean FlameSensor::isOverThreshold() {
-    int val = readSensor();
-    return val >= _threshold;
+boolean FlameSensor::isFlameDetected() {
+    // if last two sample's increase _gapThreshold, then flame detected;
+    boolean result = false;
+    return result;
+}
+
+boolean FlameSensor::isFlameDisappeared() {
+    // if last two sample's decrese _gapThreshold, then flame detected;
+    boolean result = false;
+    return result;
 }
