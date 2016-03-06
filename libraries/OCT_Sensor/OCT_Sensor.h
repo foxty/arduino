@@ -45,22 +45,26 @@ public:
 // Flame Sensor
 const int FLAME_SENSOR_ANALOG = 0;
 const int FLAME_SENSOR_DIGITAL = 1;
-const int SAMPLE_TIME_GAP = 10000; // record sample per 10 seconds
 const int SAMPLE_SIZE = 5;
+
+enum FlameSensorState {None = 0, Sensored, Detected, Cleared};
+
 class FlameSensor: public SensorBase<int> {
   public:
     // type = 0 is analog sensor
     // type = 1 is digital sensor
     FlameSensor(byte type, byte pin, int gapThreshold);
     int readSensor();
-    boolean isFlameDetected();
-    boolean isFlameDisappeared();
+	void evaluate();
+	boolean isSensored();
+    boolean isDetected();
+    boolean isCleared();
 	
   private:
     byte _type;
-    unsigned long _lastSampleTime;
+	FlameSensorState _state;
     int _samplePos;
-    int _samples[SAMPLE_SIZE];
+    int _samples[SAMPLE_SIZE] = {-1 ,-1 ,-1, -1, -1};
     int _gapThreshold;
 };
 
