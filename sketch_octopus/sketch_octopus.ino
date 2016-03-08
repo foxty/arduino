@@ -20,9 +20,9 @@ const int RATE = 2000;
 //0x27(GREEN), 0x3F(BLUE) - but sometimes it changes...
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 HumitureDHT11 dht11A(6);
-FlameSensor fs0(FLAME_SENSOR_ANALOG, A0, 100);
-FlameSensor fs1(FLAME_SENSOR_ANALOG, A1, 100);
-FlameSensor fs2(FLAME_SENSOR_ANALOG, A2, 100); 
+FlameSensor fs0(FLAME_SENSOR_ANALOG, A0, 50);
+FlameSensor fs1(FLAME_SENSOR_ANALOG, A1, 50);
+FlameSensor fs2(FLAME_SENSOR_ANALOG, A2, 50); 
 //RF24 radio(7, 8);
 
 void setup() {
@@ -47,16 +47,24 @@ void loop() {
   int fire2 = fs2.readSensor();
   Humiture ha = dht11A.readSensor();
 
-  lcd.print("H");
+  if(fs0.isDetected() || fs1.isDetected() || fs2.isDetected()) {
+    Serial.println("Flame Detected!");
+    // Send notification to central node.  
+  }
+
   lcd.print((int)ha.humidity);
-  lcd.print(",T");
+  lcd.print("H ");
   lcd.print((int)ha.temperature);
+  lcd.print("T");
 
   lcd.setCursor(0, 1);
   lcd.print(fire0);
+  lcd.print((char)fs0.getState());
   lcd.print(",");
   lcd.print(fire1);
+  lcd.print((char)fs1.getState());
   lcd.print(",");
   lcd.print(fire2);
+  lcd.print((char)fs2.getState());
   delay(RATE);
 }

@@ -39,34 +39,70 @@ Humiture HumitureDHT11::readSensor() {
 
 // FlameSensor
 FlameSensor::FlameSensor(byte type, byte pin, int t):SensorBase(pin), _type(type), _gapThreshold(t) {
-    _samplePos = 0;
 	_state = None;
 }
 
 int FlameSensor::readSensor() {
-    int val = (_type == FLAME_SENSOR_ANALOG ? analogRead(_inputPin) : digitalRead(_inputPin));
-    if(_samplePos >= SAMPLE_SIZE) _samplePos = 0;
-	_samples[_samplePos++] = val;
-	evaluate();
+    short val = (_type == FLAME_SENSOR_ANALOG ? analogRead(_inputPin) : digitalRead(_inputPin));
+	evaluate(val);
 	return val;
 }
 
-void FlameSensor::evaluate() {
-	
+void FlameSensor::evaluate(int sample) {
+	switch(_state) {
+		case None:
+		_state = Sensored;
+		break;
+		
+		case Sensored:
+		if (sample - _lastSample >= _gapThreshold) {
+			_state = Detected;
+		}
+		break;
+		
+		case Detected:
+		if(_trend == Low && _trendCount > 5) {
+			_state = Cleared;
+		}
+		break;
+		
+		case Cleared:
+		if (sample - _lastSample >= _gapThreshold) {
+			_state = Detected;
+		} else {
+			_state = Sensored;
+		}
+		break;
+	}
+	if (sample > _lastSample && _trend != High) {
+		_trend = High; 
+		_trendCount = 0;
+	} 
+	if (sample < _lastSample && _trend != Low) {
+		_trend = Low;
+		_trendCount = 0;
+	} 
+	if (sample == _lastSample && _trend != Still) {
+		_trend = Still;
+		_trendCount = 0;
+	}
+	_trendCount ++;
+	_lastSample = sample;
+}
+
+FlameSensorState FlameSensor::getState() {
+	return _state;
 }
 
 boolean FlameSensor::isSensored() {
-	return false;
+	return _state == Sensored;
 }
 
 boolean FlameSensor::isDetected() {
-    // if last two sample's increase _gapThreshold, then flame detected;
-    boolean result = false;
-    return result;
+	return _state == Detected;
 }
 
 boolean FlameSensor::isCleared() {
     // if last two sample's decrese _gapThreshold, then flame detected;
-    boolean result = false;
-    return result;
+    return _state == Cleared;
 }

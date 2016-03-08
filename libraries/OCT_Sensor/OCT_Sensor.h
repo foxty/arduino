@@ -45,9 +45,9 @@ public:
 // Flame Sensor
 const int FLAME_SENSOR_ANALOG = 0;
 const int FLAME_SENSOR_DIGITAL = 1;
-const int SAMPLE_SIZE = 5;
 
-enum FlameSensorState {None = 0, Sensored, Detected, Cleared};
+enum FlameSensorState {None = 'N', Sensored = 'S' , Detected = 'D', Cleared = 'C'};
+enum FlameSensorTrend {High, Still, Low};
 
 class FlameSensor: public SensorBase<int> {
   public:
@@ -55,7 +55,8 @@ class FlameSensor: public SensorBase<int> {
     // type = 1 is digital sensor
     FlameSensor(byte type, byte pin, int gapThreshold);
     int readSensor();
-	void evaluate();
+	void evaluate(int sample);
+	FlameSensorState getState();
 	boolean isSensored();
     boolean isDetected();
     boolean isCleared();
@@ -63,9 +64,10 @@ class FlameSensor: public SensorBase<int> {
   private:
     byte _type;
 	FlameSensorState _state;
-    int _samplePos;
-    int _samples[SAMPLE_SIZE] = {-1 ,-1 ,-1, -1, -1};
-    int _gapThreshold;
+	FlameSensorTrend _trend;
+	short _trendCount;
+	short _lastSample;
+    short _gapThreshold;
 };
 
 #endif
