@@ -2,7 +2,7 @@
 
 // SensorBase
 template <typename T>
-SensorBase<T>::SensorBase(byte pin) {
+SensorBase<T>::SensorBase(int pin) {
     _inputPin = pin;
     pinMode(_inputPin, INPUT);
 }
@@ -17,7 +17,7 @@ float TemperatureLM35::readSensor() {
 }
 
 // HumitureDHT11
-HumitureDHT11::HumitureDHT11(byte pin):SensorBase(pin), _dht(pin, DHT11) {
+HumitureDHT11::HumitureDHT11(int pin):SensorBase(pin), _dht(pin, DHT11) {
     _dht.begin();
 }
 
@@ -38,7 +38,7 @@ Humiture HumitureDHT11::readSensor() {
 }
 
 // FlameSensor
-FlameSensor::FlameSensor(byte type, byte pin, int t):SensorBase(pin), _type(type), _gapThreshold(t) {
+FlameSensor::FlameSensor(int type, int pin, int t):SensorBase(pin), _type(type), _gapThreshold(t) {
 	_state = None;
 }
 

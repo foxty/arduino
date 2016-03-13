@@ -1,7 +1,7 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
-#include <OCT_Sensor.h>
 #include <SPI.h>
+#include "OCT_Sensor.h"
 #include "nRF24L01.h"
 #include "RF24.h"
 

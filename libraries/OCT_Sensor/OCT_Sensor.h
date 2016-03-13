@@ -1,5 +1,5 @@
 /*
-    OCT Sensor 类库，为Octopus项目提供专用类库，主要封装各种传感器并加入软均衡算法。
+    OCT Sensor
 */
 #ifndef OCT_Sensor_h
 #define OCT_Sensor_h
@@ -16,11 +16,11 @@ struct Humiture {
 template<typename T>
 class SensorBase {
 public:
-    SensorBase(byte pin);
+    SensorBase(int pin);
 	virtual T readSensor() = 0;
 	
 protected:
-	byte _inputPin;
+	int _inputPin;
     T _samples[10];
 };
 
@@ -34,7 +34,7 @@ public:
 // DHT11
 class HumitureDHT11: public SensorBase<Humiture> {
 public:
-    HumitureDHT11(byte pin);
+    HumitureDHT11(int pin);
     Humiture readSensor();
     
   private:
@@ -53,7 +53,7 @@ class FlameSensor: public SensorBase<int> {
   public:
     // type = 0 is analog sensor
     // type = 1 is digital sensor
-    FlameSensor(byte type, byte pin, int gapThreshold);
+    FlameSensor(int type, int pin, int gapThreshold);
     int readSensor();
 	void evaluate(int sample);
 	FlameSensorState getState();
@@ -62,7 +62,7 @@ class FlameSensor: public SensorBase<int> {
     boolean isCleared();
 	
   private:
-    byte _type;
+    int _type;
 	FlameSensorState _state;
 	FlameSensorTrend _trend;
 	short _trendCount;
