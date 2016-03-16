@@ -12,7 +12,12 @@
 RF24 radio(7, 8);
 /**********************************************************/
 byte addresses[][6] = {"1Node", "2Node"};
-LiquidCrystal_I2C lcd(0x3F, 16, 2);
+struct dataStruct {
+  unsigned long _micros;
+  float value;
+} myData;
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 void setup() {
   printf_begin();
@@ -29,39 +34,39 @@ void setup() {
   // Open a writing and reading pipe on each radio, with opposite addresses
   radio.openWritingPipe(addresses[0]);
   radio.openReadingPipe(1, addresses[1]);
-  radio.setAutoAck(false);
-  lcd.print("2Node C:");
+  lcd.print("2Node C");
   lcd.print(radio.getChannel());
   delay(1000);
   radio.printDetails();
+  lcd.clear();
   // Start the radio listening for data
+  radio.startListening();
+
 }
 void loop() {
-  lcd.clear();
-
   /****************** Pong Back Role ***************************/
-  radio.startListening();
-  unsigned long got_time;
-  lcd.print("R...");
   if ( radio.available()) {
-    // Variable for the received timestamp
-    while (radio.available()) {                                   // While there is data ready
-      radio.read( &got_time, sizeof(unsigned long) );             // Get the payload
+    lcd.setCursor(0, 0);
+    lcd.print("R...");
+    while (radio.available()) {                          // While there is data ready
+      radio.read( &myData, sizeof(myData) ); // Get the payload
+      lcd.print(myData.value);
     }
-    lcd.print(got_time);     
 
+    radio.stopListening();                               // First, stop listening so we can talk
+    myData.value += 0.01;       // Increment the float value
     lcd.setCursor(0, 1);
     lcd.print("S...");
-    delay(1000); //Delay 100ms wait receiver to start listening.
-    radio.stopListening();                                        // First, stop listening so we can talk
-    if (!radio.write( &got_time, sizeof(unsigned long))) {
-      Serial.println("Send back failed!");
-      lcd.print("Fail");
+    bool re = radio.write( &myData, sizeof(myData) );              // Send the final one back.
+    if (re) {
+      lcd.print(myData.value);
     } else {
-      lcd.print("Done");
+      lcd.print("Fail");
     }
+    radio.startListening();                              // Now, resume listening so we catch the next packets.
     Serial.print(F("Sent response "));
-    Serial.println(got_time);
+    Serial.print(myData._micros);
+    Serial.print(F(" : "));
+    Serial.println(myData.value);
   }
-  delay(1000);
 } // Loop

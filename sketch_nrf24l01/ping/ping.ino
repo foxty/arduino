@@ -8,13 +8,16 @@
 #include <LiquidCrystal_I2C.h>
 #include <printf.h>
 /****************** User Config ***************************/
-/***      Set this radio as radio number 0 or 1         ***/
-bool radioNumber = 0;
 /* Hardware configuration: Set up nRF24L01 radio on SPI bus plus pins 7 & 8 */
 RF24 radio(7, 8);
 /**********************************************************/
 byte addresses[][6] = {"1Node", "2Node"};
-LiquidCrystal_I2C lcd(0x27, 16, 2);
+struct dataStruct {
+  unsigned long _micros;
+  float value;
+} myData;
+
+LiquidCrystal_I2C lcd(0x3F, 16, 2);
 
 void setup() {
   printf_begin();
@@ -31,62 +34,61 @@ void setup() {
   // Open a writing and reading pipe on each radio, with opposite addresses
   radio.openWritingPipe(addresses[1]);
   radio.openReadingPipe(1, addresses[0]);
-  radio.setAutoAck(false);
   lcd.print("1Node C");
   lcd.print(radio.getChannel());
   Serial.print("Workign on channel:");
   Serial.println(radio.getChannel());
+  myData.value = 1.22;
   delay(1000);
   radio.printDetails();
+  lcd.clear();
 }
 void loop() {
-  lcd.clear();
   /****************** Ping Out Role ***************************/
   radio.stopListening();                                    // First, stop listening so we can talk.
   Serial.println(F("Now sending"));
+  lcd.setCursor(0, 0);
   lcd.print("S...");
-  unsigned long time = micros();                             // Take the time, and send it.  This will block until complete
-  if (!radio.write( &time, sizeof(unsigned long) )) {
-    Serial.println(F("Failed, wait to next loop."));
+  myData._micros = micros();
+  if (!radio.write( &myData, sizeof(myData) )) {
+    Serial.println(F("failed"));
     lcd.print("Fail");
   } else {
-    Serial.println("Success!");
-    lcd.print("Succ");
+    lcd.print(myData.value);
   }
-  //radio.printDetails();
-  lcd.setCursor(0, 1);
-  lcd.print("R...");
-  radio.startListening();                                    // Now, continue listening
 
+  radio.startListening();                                    // Now, continue listening
   unsigned long started_waiting_at = micros();               // Set up a timeout period, get the current microseconds
   boolean timeout = false;                                   // Set up a variable to indicate if a response was received or not
 
-  while (!radio.available() ) {                            // While nothing is received
-    if (micros() - started_waiting_at > 500000 ) {           // If waited longer than 200ms, indicate timeout and exit while loop
+  lcd.setCursor(0 , 1);
+  lcd.print("R...");
+  while ( ! radio.available() ) {                            // While nothing is received
+    if (micros() - started_waiting_at > 200000 ) {           // If waited longer than 200ms, indicate timeout and exit while loop
       timeout = true;
       break;
     }
   }
 
   if ( timeout ) {                                            // Describe the results
-    Serial.println(F("Response timed out."));
+    Serial.println(F("Failed, response timed out."));
     lcd.print("Fail");
   } else {
-    unsigned long got_time;                                 // Grab the response, compare, and send to debugging spew
-    radio.read( &got_time, sizeof(unsigned long) );
+    // Grab the response, compare, and send to debugging spew
+    radio.read( &myData, sizeof(myData) );
     unsigned long time = micros();
+    lcd.print(myData.value);
 
     // Spew it
     Serial.print(F("Sent "));
     Serial.print(time);
     Serial.print(F(", Got response "));
-    Serial.print(got_time);
+    Serial.print(myData._micros);
     Serial.print(F(", Round-trip delay "));
-    Serial.print(time - got_time);
-    Serial.println(F(" microseconds"));
-    lcd.print(time - got_time);
+    Serial.print(time - myData._micros);
+    Serial.print(F(" microseconds Value "));
+    Serial.println(myData.value);
   }
-
-  // Try again 5s later
+  // Try again 1s later
   delay(5000);
 } // Loop
