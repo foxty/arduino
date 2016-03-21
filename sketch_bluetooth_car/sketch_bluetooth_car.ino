@@ -3,10 +3,14 @@
 // right wheel
 #define PIN_IN1 2
 #define PIN_IN2 4
+#define PIN_R_SPEED 3
+
 
 // left wheel
 #define PIN_IN3 5
 #define PIN_IN4 7
+#define PIN_L_SPEED 6
+
 
 #define PIN_RX 10
 #define PIN_TX 9
@@ -14,6 +18,7 @@
 SoftwareSerial blueTooth(PIN_RX, PIN_TX);
 
 enum Direction {Forward, Stop, Backward};
+int curSpeed = 100;
 
 void setup() {
   // put your setup code here, to run once:
@@ -61,66 +66,32 @@ void loop() {
     switch (c) {
       case 'F':
       case 'f':
-        forward(100);
+        forward(curSpeed);
         break;
       case 'B':
       case 'b':
-        backward(100);
+        backward(curSpeed);
         break;
       case 'L':
       case 'l':
-        left(100);
+        left(curSpeed);
         break;
       case 'R':
       case 'r':
-        right(100);
+        right(curSpeed);
         break;
       case 'S':
       case 's':
         stop();
         break;
+      case '+':
+        accelerate();
+        break;
+      case '-':
+        decelerate();
+        break;
     }
   }
-}
-
-/*
-   Run left weehl
-   @Direction
-   @Speed
-*/
-void runLeftWheel(Direction dir, int speed) {
-  switch (dir) {
-    case Forward:
-      digitalWrite(PIN_IN3, HIGH);
-      digitalWrite(PIN_IN4, LOW);
-      break;
-    case Stop:
-      digitalWrite(PIN_IN3, LOW);
-      digitalWrite(PIN_IN4, LOW);
-      break;
-    case Backward:
-      digitalWrite(PIN_IN3, LOW);
-      digitalWrite(PIN_IN4, HIGH);
-      break;
-  }
-}
-
-void runRightWheel(Direction dir, int speed) {
-  switch (dir) {
-    case Forward:
-      digitalWrite(PIN_IN1, HIGH);
-      digitalWrite(PIN_IN2, LOW);
-      break;
-    case Stop:
-      digitalWrite(PIN_IN1, LOW);
-      digitalWrite(PIN_IN2, LOW);
-      break;
-    case Backward:
-      digitalWrite(PIN_IN1, LOW);
-      digitalWrite(PIN_IN2, HIGH);
-      break;
-  }
-
 }
 
 void forward(int speed) {
@@ -146,5 +117,55 @@ void right(int speed) {
 void stop() {
   runLeftWheel(Stop, 0);
   runRightWheel(Stop, 0);
+}
+
+void accelerate() {
+  curSpeed += 50;
+}
+
+void decelerate() {
+  curSpeed -= 50;
+}
+
+/*
+   Run left weehl
+   @Direction
+   @Speed
+*/
+void runLeftWheel(Direction dir, int speed) {
+  analogWrite(PIN_L_SPEED, speed);
+  switch (dir) {
+    case Forward:
+      digitalWrite(PIN_IN3, HIGH);
+      digitalWrite(PIN_IN4, LOW);
+      break;
+    case Stop:
+      digitalWrite(PIN_IN3, LOW);
+      digitalWrite(PIN_IN4, LOW);
+      break;
+    case Backward:
+      digitalWrite(PIN_IN3, LOW);
+      digitalWrite(PIN_IN4, HIGH);
+      break;
+  }
+}
+
+void runRightWheel(Direction dir, int speed) {
+  analogWrite(PIN_R_SPEED, speed);
+  switch (dir) {
+    case Forward:
+      digitalWrite(PIN_IN1, HIGH);
+      digitalWrite(PIN_IN2, LOW);
+      break;
+    case Stop:
+      digitalWrite(PIN_IN1, LOW);
+      digitalWrite(PIN_IN2, LOW);
+      break;
+    case Backward:
+      digitalWrite(PIN_IN1, LOW);
+      digitalWrite(PIN_IN2, HIGH);
+      break;
+  }
+
 }
 
