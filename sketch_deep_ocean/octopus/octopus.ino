@@ -6,7 +6,7 @@
 #include "RF24.h"
 
 /**
-   利用红外三极管探测火焰,检测到则出发红色LED报警
+   利用红外三极管探测火焰
 
     - LM35 信号接A0
     - DHT11 GND接地,VCC接入5v电源,信号接入到PIN 8
@@ -32,7 +32,6 @@ void setup() {
   lcd.print("    Octopus"); // Print a message to the LCD.
 
   Serial.begin(9600);
-  //Serial.begin(57600);
   //radio.begin();
   //radio.openWritingPipe(pipe);
   //radio.printDetails();

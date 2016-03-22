@@ -3,14 +3,9 @@
 */
 #ifndef OCT_Sensor_h
 #define OCT_Sensor_h
-
 #include "DHT.h"
 
-// Structure for Humiture(For DHT11 DHT22)
-struct Humiture {
-  float humidity;
-  float temperature;
-};
+enum DeviceType {Head, Joint, Tentacle};
 
 // Base class of Sensor
 template<typename T>
@@ -32,6 +27,11 @@ public:
 };
 
 // DHT11
+// Structure for Humiture(For DHT11 DHT22)
+struct Humiture {
+  float humidity;
+  float temperature;
+};
 class HumitureDHT11: public SensorBase<Humiture> {
 public:
     HumitureDHT11(int pin);
