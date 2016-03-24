@@ -7,17 +7,16 @@
 #include "RF24.h"
 #include <LiquidCrystal_I2C.h>
 #include <printf.h>
-/****************** User Config ***************************/
-/* Hardware configuration: Set up nRF24L01 radio on SPI bus plus pins 7 & 8 */
+
+LiquidCrystal_I2C lcd(0x3F, 16, 2);
 RF24 radio(7, 8);
+
 /**********************************************************/
 byte addresses[][6] = {"1Node", "2Node"};
 struct dataStruct {
   unsigned long _micros;
   float value;
 } myData;
-
-LiquidCrystal_I2C lcd(0x3F, 16, 2);
 
 void setup() {
   printf_begin();
@@ -27,20 +26,15 @@ void setup() {
   lcd.noBacklight(); //Close the backlight
 
   radio.begin();
-  // Set the PA Level low to prevent power supply related issues since this is a
-  // getting_started sketch, and the likelihood of close proximity of the devices. RF24_PA_MAX is default.
-  radio.setPALevel(RF24_PA_LOW);
-
   // Open a writing and reading pipe on each radio, with opposite addresses
   radio.openWritingPipe(addresses[1]);
   radio.openReadingPipe(1, addresses[0]);
+  radio.printDetails();
+  
   lcd.print("1Node C");
   lcd.print(radio.getChannel());
-  Serial.print("Workign on channel:");
-  Serial.println(radio.getChannel());
-  myData.value = 1.22;
-  delay(1000);
-  radio.printDetails();
+  delay(2000);
+  myData.value = 1.00;
   lcd.clear();
 }
 void loop() {
@@ -90,5 +84,5 @@ void loop() {
     Serial.println(myData.value);
   }
   // Try again 1s later
-  delay(5000);
+  delay(2000);
 } // Loop
