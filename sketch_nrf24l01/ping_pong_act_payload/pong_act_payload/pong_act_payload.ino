@@ -59,14 +59,14 @@ void loop() {
   byte pipeNo;
   byte gotByte;                                       // Dump the payloads until we've gotten everything
   while (radio.available(&pipeNo)) {
-    radio.read( &gotByte, 1 ); 
+    radio.read( &gotByte, 1 );
     lcd.print(gotByte);
     radio.writeAckPayload(pipeNo, &gotByte, 1 );
     lcd.setCursor(0, 1);
     lcd.print("A..");
     lcd.print(gotByte);
     printf("Get %d . ", gotByte);
-    delay(1000);
-    lcd.clear();
   }
+  delay(1000);
+  lcd.clear();
 } // Loop
