@@ -18,6 +18,7 @@
 SoftwareSerial blueTooth(PIN_RX, PIN_TX);
 
 enum Direction {Forward, Stop, Backward};
+Direction curDirection = Stop;
 int curSpeed = 100;
 
 void setup() {
@@ -58,60 +59,37 @@ void sendBlueToothCommand(char command[])
   }
 }
 
+char cmd[10] = "A000S000E";
 void loop() {
   // put your main code here, to run repeatedly:
+  int pos = 0;
   while (blueTooth.available()) {
-    char c = (char(blueTooth.read()));
-    Serial.println(c);
-    switch (c) {
-      case 'F':
-      case 'f':
-        forward(curSpeed);
-        break;
-      case 'B':
-      case 'b':
-        backward(curSpeed);
-        break;
-      case 'L':
-      case 'l':
-        left(curSpeed);
-        break;
-      case 'R':
-      case 'r':
-        right(curSpeed);
-        break;
-      case 'S':
-      case 's':
-        stop();
-        break;
-      case '+':
-        accelerate();
-        break;
-      case '-':
-        decelerate();
-        break;
+    char c = char(blueTooth.read());
+    cmd[pos++] = c;
+  }
+  if (pos > 0) {
+    Serial.println(pos);
+    short angle = 0;
+    short speed = 0;
+    if (angle >= 300 || angle <= 60) {
+      forward(angle, speed);
+    }
+    if (angle >= 120 || angle <= 240) {
+      backward(angle, speed);
     }
   }
 }
 
-void forward(int speed) {
-  runLeftWheel(Forward, speed);
-  runRightWheel(Forward, speed);
+void forward(int angle, int speed) {
+  float x = sin(angle);
+  runLeftWheel(Forward, x < 0 ? speed * (1 - x) : speed);
+  runRightWheel(Forward, x > 0 ? speed * (1 + x) : speed);
 }
 
-void backward(int speed) {
-  runLeftWheel(Backward, speed);
-  runRightWheel(Backward, speed);
-}
-
-void left(int speed) {
-  runLeftWheel(Stop, speed);
-  runRightWheel(Forward, speed);
-}
-
-void right(int speed) {
-  runLeftWheel(Forward, speed);
-  runRightWheel(Stop, speed);
+void backward(int angle, int speed) {
+  float x = sin(angle);
+  runLeftWheel(Forward, x > 0 ? speed * (1 - x) : speed);
+  runRightWheel(Forward, x < 0 ? speed * (1 + x) : speed);
 }
 
 void stop() {
@@ -166,6 +144,4 @@ void runRightWheel(Direction dir, int speed) {
       digitalWrite(PIN_IN2, HIGH);
       break;
   }
-
 }
-
