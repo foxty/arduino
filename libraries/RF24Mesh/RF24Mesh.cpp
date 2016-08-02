@@ -14,12 +14,14 @@ RF24Mesh::RF24Mesh( RF24& _radio,RF24Network& _network ): radio(_radio),network(
 /*****************************************************/
 
 bool RF24Mesh::begin(uint8_t channel, rf24_datarate_e data_rate, uint32_t timeout){
+  delay(1); // Found problems w/SPIDEV & ncurses. Without this, getch() returns a stream of garbage
   radio.begin();
   if(getNodeID()){ //Not master node
     mesh_address = MESH_DEFAULT_ADDRESS;
   }else{
     #if !defined (RF24_TINY) && !defined(MESH_NOMASTER)
 	addrList = (addrListStruct*)malloc(2 * sizeof(addrListStruct));
+	addrListTop = 0;
 	loadDHCP();
 	#endif
     mesh_address = 0;
@@ -52,7 +54,8 @@ uint8_t RF24Mesh::update(){
 	  doDHCP = 1;
 	}
 
-	if( (type == MESH_ADDR_LOOKUP || type == MESH_ID_LOOKUP) && !getNodeID()) {
+  if(!getNodeID()){
+	if( (type == MESH_ADDR_LOOKUP || type == MESH_ID_LOOKUP)) {
 	  RF24NetworkHeader& header = *(RF24NetworkHeader*)network.frame_buffer;
 	  header.to_node = header.from_node;
 	  
@@ -66,7 +69,7 @@ uint8_t RF24Mesh::update(){
 	  //printf("Returning lookup 0%o to 0%o   \n",returnAddr,header.to_node);
 	  //network.write(header,&returnAddr,sizeof(returnAddr));	
 	}else
-	if(type == MESH_ADDR_RELEASE && !getNodeID() ){
+	if(type == MESH_ADDR_RELEASE ){
 		uint16_t *fromAddr = (uint16_t*)network.frame_buffer;
 		for(uint8_t i=0; i<addrListTop; i++){
 			if(addrList[i].address == *fromAddr){
@@ -74,6 +77,17 @@ uint8_t RF24Mesh::update(){
 			}
 		}		
 	}
+    #if !defined (ARDUINO_ARCH_AVR)
+    else 
+	if(type == MESH_ADDR_CONFIRM ){
+        RF24NetworkHeader& header = *(RF24NetworkHeader*)network.frame_buffer;
+        if(header.from_node == lastAddress){
+            setAddress(lastID,lastAddress);
+        }        
+    }
+    #endif
+  }
+    
 	#endif
 	return type;
 }
@@ -90,7 +104,7 @@ bool RF24Mesh::write(const void* data, uint8_t msg_type, size_t size, uint8_t no
   if(mesh_address == MESH_DEFAULT_ADDRESS){ return 0; }
   
   int16_t toNode = 0;
-  uint32_t lookupTimeout = millis()+ MESH_LOOKUP_TIMEOUT;
+  int32_t lookupTimeout = millis()+ MESH_LOOKUP_TIMEOUT;
   uint32_t retryDelay = 50;
   
   if(nodeID){
@@ -270,7 +284,7 @@ bool RF24Mesh::requestAddress(uint8_t level){
 		bool goodSignal = radio.testRPD();
         #endif
 		if(network.update() == NETWORK_POLL){
-            memcpy(&contactNode[pollCount],&network.frame_buffer[0],sizeof(contactNode));
+            memcpy(&contactNode[pollCount],&network.frame_buffer[0],sizeof(uint16_t));
             ++pollCount;
             
             #if defined (MESH_DEBUG_SERIAL) || defined (MESH_DEBUG_PRINTF)    
@@ -446,10 +460,10 @@ void RF24Mesh::setAddress(uint8_t nodeID, uint16_t address){
   }
   
    #if defined (__linux)  && !defined(__ARDUINO_X86__)
-		if(millis()-lastFileSave > 300){
-			lastFileSave = millis();
+		//if(millis()-lastFileSave > 300){
+		//	lastFileSave = millis();
 			saveDHCP();
-		}
+		//}
    #endif	  
   
 }
@@ -535,6 +549,7 @@ void RF24Mesh::DHCP(){
      
      uint16_t fwd_by = 0;
      uint8_t shiftVal = 0;
+     bool extraChild = 0;
      
      if( header.from_node != MESH_DEFAULT_ADDRESS){
        fwd_by = header.from_node;
@@ -546,13 +561,16 @@ void RF24Mesh::DHCP(){
          count++; 
        }
        shiftVal = count*3; //Now we know how many bits to shift when adding a child node 1-5 (B001 to B101) to any address         
+     }else{
+         //If request is coming from level 1, add an extra child to the master
+         extraChild = 1;
      }
 
        #ifdef MESH_DEBUG_PRINTF
 	   //  printf("%u MSH: Rcv addr req from_id %d \n",millis(),from_id);
 	   #endif
        
-	   for(int i=MESH_MAX_CHILDREN; i> 0; i--){ // For each of the possible addresses (5 max)
+	   for(int i=MESH_MAX_CHILDREN+extraChild; i> 0; i--){ // For each of the possible addresses (5 max)
          
         bool found = 0;
         newAddress = fwd_by | (i << shiftVal);
@@ -599,9 +617,10 @@ void RF24Mesh::DHCP(){
 			//addrMap[from_id] = newAddress;
           }
        		uint32_t timer=millis();
+            lastAddress = newAddress;
+            lastID = from_id;
             while(network.update() != MESH_ADDR_CONFIRM){
-				if(millis()-timer>45){
-				    //printf("No addr confirmation from 0%o\n",header.to_node);
+				if(millis()-timer > network.routeTimeout){
 					return;
 				}
 				

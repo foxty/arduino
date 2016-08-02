@@ -59,37 +59,56 @@ void sendBlueToothCommand(char command[])
   }
 }
 
-char cmd[10] = "A000S000E";
+char cmd[10];
 void loop() {
   // put your main code here, to run repeatedly:
-  int pos = 0;
-  while (blueTooth.available()) {
-    char c = char(blueTooth.read());
-    cmd[pos++] = c;
+  short pos = 0;
+  short angle = 0;
+  short speed = 0;
+
+  while (pos < 9) {
+    if (blueTooth.available()) {
+      char c = char(blueTooth.read());
+      cmd[pos++] = c;
+    }
   }
-  if (pos > 0) {
-    Serial.println(pos);
-    short angle = 0;
-    short speed = 0;
-    if (angle >= 300 || angle <= 60) {
-      forward(angle, speed);
-    }
-    if (angle >= 120 || angle <= 240) {
-      backward(angle, speed);
-    }
+
+  sscanf(cmd, "%d.%d", &angle, &speed);
+  float x = sin(angle * 3.14 / 180) / 2;
+  Serial.print("CMD=");
+  Serial.print(cmd);
+  Serial.print(",POS=");
+  Serial.print(pos);
+  Serial.print(", A=");
+  Serial.print(angle);
+  Serial.print(", S=");
+  Serial.print(speed);
+  Serial.print(", x=");
+  Serial.println(x);
+  if (angle >= 300 || angle <= 60) {
+    forward(x, speed);
+  }
+  if (angle >= 120 && angle <= 240) {
+    backward(x, speed);
   }
 }
 
-void forward(int angle, int speed) {
-  float x = sin(angle);
-  runLeftWheel(Forward, x < 0 ? speed * (1 - x) : speed);
-  runRightWheel(Forward, x > 0 ? speed * (1 + x) : speed);
+void forward(float x, int speed) {
+  Serial.print("Forward: x=");
+  Serial.print(x);
+  Serial.print(",speed=");
+  Serial.println(speed);
+  runLeftWheel(Forward, x > 0 ? speed * (1 + x)  : speed);
+  runRightWheel(Forward, x < 0 ? speed * (1 - x) : speed);
 }
 
-void backward(int angle, int speed) {
-  float x = sin(angle);
-  runLeftWheel(Forward, x > 0 ? speed * (1 - x) : speed);
-  runRightWheel(Forward, x < 0 ? speed * (1 + x) : speed);
+void backward(float x, int speed) {
+  Serial.print("Backward: x=");
+  Serial.print(x);
+  Serial.print(",speed=");
+  Serial.println(speed);
+  runLeftWheel(Backward, x > 0 ? speed * (1 + x) : speed);
+  runRightWheel(Backward, x < 0 ? speed * (1 - x) : speed);
 }
 
 void stop() {
@@ -111,7 +130,7 @@ void decelerate() {
    @Speed
 */
 void runLeftWheel(Direction dir, int speed) {
-  analogWrite(PIN_L_SPEED, speed);
+  analogWrite(PIN_L_SPEED, speed * 1.25);
   switch (dir) {
     case Forward:
       digitalWrite(PIN_IN3, HIGH);
